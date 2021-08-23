@@ -29,7 +29,7 @@ Route::group(['prefix' => 'v1'], function () {
     Route::group(['middleware' => 'api.auth'], function () {
         Route::post('logout', [LoginController::class, 'logout'])->name('api.v1.logout');
 
-        Route::group(['prefix' => 'teams', 'middleware' => 'check.admin.user'], function () {
+        Route::group(['prefix' => 'teams'], function () {
             Route::post('/', [TeamController::class, 'store'])->name('api.v1.teams.store');
             Route::patch('/{team}', [TeamController::class, 'update'])->name('api.v1.teams.update');
             Route::delete('/{team}', [TeamController::class, 'destroy'])->name('api.v1.teams.destroy');
