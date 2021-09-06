@@ -13,6 +13,10 @@ class Team extends Model
 
     protected $hidden = ['created_at', 'updated_at'];
 
+    protected $casts = [
+        'name' => 'string'
+    ];
+
     /**
      * Team has many players.
      *

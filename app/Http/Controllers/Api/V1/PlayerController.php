@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Player;
+use App\Traits\UploadFileTrait;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PlayerResource;
@@ -14,9 +16,11 @@ use App\Http\Requests\PlayerUpdateRequest;
 
 class PlayerController extends Controller
 {
+    use UploadFileTrait;
+
     /**
      * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @return PlayerCollection
      */
     public function index(Request $request)
     {
@@ -34,11 +38,7 @@ class PlayerController extends Controller
     {
         try {
             $validated = $request->validated();
-            if ($request->hasFile('playerImageURI')) {
-                $validated['playerImageURI'] = $request
-                    ->file('playerImageURI')
-                    ->store('public');
-            }
+            $validated['playerImageURI'] = $this->storeUploadedFile($request, 'playerImageURI');
 
             $player = Player::create($validated);
 
@@ -52,19 +52,20 @@ class PlayerController extends Controller
     }
 
     /**
-     * @param Player $player
+     * @param $playerId
      * @return PlayerResource|\JsonResponse
      */
-    public function show(Player $player)
+    public function show($playerId)
     {
         try {
-            $player = $player->load('team');
+            $player = Player::with('team')->findOrFail($playerId);
             return new PlayerResource($player);
-        } catch (\Throwable $throwable) {
+        } catch (ModelNotFoundException $e) {
+            return simpleMessageResponse('Player not found', NOT_FOUND);
+        }catch (\Throwable $throwable) {
             logError('Error while getting player details', 'Api\V1\PlayerController@show', $throwable);
             return simpleMessageResponse('Server Error', INTERNAL_SERVER);
         }
-
     }
 
     /**
@@ -83,9 +84,7 @@ class PlayerController extends Controller
                     Storage::delete($player->playerImageURI);
                 }
 
-                $validated['playerImageURI'] = $request
-                    ->file('playerImageURI')
-                    ->store('public');
+                $validated['playerImageURI'] = $this->storeUploadedFile($request, 'playerImageURI');
             }
 
             $player->update($validated);
@@ -97,7 +96,6 @@ class PlayerController extends Controller
             logError('Error while updating player details', 'Api\V1\PlayerController@update', $throwable);
             return simpleMessageResponse('Server Error', INTERNAL_SERVER);
         }
-
     }
 
     /**

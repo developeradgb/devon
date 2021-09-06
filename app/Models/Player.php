@@ -18,6 +18,12 @@ class Player extends Model
         'team_id',
     ];
 
+    protected $casts = [
+        'firstName' => 'string',
+        'lastName' => 'string',
+        'playerImageURI' => 'string',
+    ];
+
     /**
      * Player belongs to a team.
      *

@@ -7,20 +7,31 @@ use App\Models\Team;
 use App\Http\Resources\TeamResource;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TeamStoreRequest;
+use App\Traits\UploadFileTrait;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\TeamUpdateRequest;
 
 class TeamController extends Controller
 {
+    use UploadFileTrait;
+
     /**
-     * @return TeamResource
+     * @return TeamResource|\JsonResponse
      */
     public function index()
     {
-        $teams = Team::latest()->get();
+        try {
+            $teams = Team::latest()->get();
 
-        return new TeamResource($teams);
+            return new TeamResource($teams);
+        } catch (\Throwable $throwable) {
+            DB::rollBack();
+            logError('Error while getting team list', 'Api\V1\TeamController@index', $throwable);
+            return simpleMessageResponse('Error while getting team list', INTERNAL_SERVER);
+        }
+
     }
 
     /**
@@ -32,9 +43,8 @@ class TeamController extends Controller
         DB::beginTransaction();
         try {
             $validated = $request->all();
-            if ($request->hasFile('logoURI')) {
-                $validated['logoURI'] = $request->file('logoURI')->store('public');
-            }
+            $validated['logoURI'] = $this->storeUploadedFile($request, 'logoURI');
+
             $team = Team::create($validated);
             DB::commit();
 
@@ -46,15 +56,21 @@ class TeamController extends Controller
         }
     }
 
-
     /**
      * @param Team $team
-     * @return TeamResource
+     * @return TeamShowResource|\JsonResponse
      */
     public function show($team)
     {
-        $team  = Team::with('players')->find($team);
-        return new TeamShowResource($team);
+        try {
+            $team = Team::with('players')->findOrFail($team);
+            return new TeamShowResource($team);
+        } catch (ModelNotFoundException $e) {
+            return simpleMessageResponse('Team not found', NOT_FOUND);
+        } catch (\Throwable $throwable) {
+            logError('Error while showing team', 'Api\V1\TeamController@show', $throwable);
+            return simpleMessageResponse('Server Error', INTERNAL_SERVER);
+        }
     }
 
     /**
@@ -73,7 +89,7 @@ class TeamController extends Controller
                     Storage::delete($team->logoURI);
                 }
 
-                $validated['logoURI'] = $request->file('logoURI')->store('public');
+                $validated['logoURI'] = $this->storeUploadedFile($request, 'logoURI');
             }
 
             $team->update($validated);

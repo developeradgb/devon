@@ -1,20 +1,17 @@
 # Devon Assignment
 
 ## Steps to Install
-- Clone this repo to your local.
-- Run `composer install` on the project base folder.
-- Update the .env file with the database connect details.
-- Run `php artisan migrate` to migrate the table migrations.
-- Run `php artisan db:seed` to seed the create the admin user.
-- Login using the below credentials
+1.Clone this repo to your local.
+2. Run `composer install` on the project base folder.
+3. Update the .env file with the database connect details.
+4. Run `php artisan migrate` to migrate the table migrations.
+5. Run `php artisan db:seed` to seed the create the admin user and normal user.
+6. Need to update the maximum file upload size.
+7. User Details
 - Admin User
-Email : admin@devon.com
-Password : Password@123
+    Email : admin@devon.com
+    Password : Password@123
 - Normal user
 Email : user@devon.com
 Password : PasswordUser@123
-- Route Details :
-- Login API - https://devon-assignment.herokuapp.com/api/v1/login
-- Teams List - https://devon-assignment.herokuapp.com/api/v1/teams
-- Team Player List - https://devon-assignment.herokuapp.com/api/v1/teams/{Id}
-- Player Details - https://devon-assignment.herokuapp.com/api/v1/players/{Id}
+8. Api Documentation - https://devon8.docs.apiary.io/#
